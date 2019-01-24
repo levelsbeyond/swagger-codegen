@@ -157,6 +157,10 @@ public class ExampleGenerator {
             Property innerType = ((ArrayProperty) property).getItems();
             if (innerType != null) {
                 int arrayLength = null == ((ArrayProperty) property).getMaxItems() ? 2 : ((ArrayProperty) property).getMaxItems();
+                if(arrayLength>10000) {
+                    logger.warn("The max items allowed in property {} is too large ({} items), restricting it to 10,000 items", property, arrayLength);
+                    arrayLength=10000;
+                }
                 Object[] objectProperties = new Object[arrayLength];
                 Object objProperty = resolvePropertyToExample(propertyName, mediaType, innerType, processedModels);
                 for(int i=0; i < arrayLength; i++) {
