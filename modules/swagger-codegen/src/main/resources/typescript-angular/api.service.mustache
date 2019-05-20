@@ -307,44 +307,93 @@ export class {{classname}} {
         }
         {{/isListContainer}}
 {{/formParams}}
-
-{{/hasFormParams}}
-{{#useHttpClient}}
-        return this.httpClient.{{httpMethod}}{{^isResponseFile}}<{{#returnType}}{{{returnType}}}{{#isResponseTypeFile}}|undefined{{/isResponseTypeFile}}{{/returnType}}{{^returnType}}any{{/returnType}}>{{/isResponseFile}}(`${this.basePath}{{{path}}}`,{{#isBodyAllowed}}
-            {{#bodyParam}}{{paramName}}{{/bodyParam}}{{^bodyParam}}{{#hasFormParams}}convertFormParamsToString ? formParams.toString() : formParams{{/hasFormParams}}{{^hasFormParams}}null{{/hasFormParams}}{{/bodyParam}},{{/isBodyAllowed}}
-            {
-{{#hasQueryParams}}
-                params: queryParameters,
-{{/hasQueryParams}}
-{{#isResponseFile}}
-                responseType: "blob",
-{{/isResponseFile}}
-                withCredentials: this.configuration.withCredentials,
-                headers: headers,
-                observe: observe,
-                reportProgress: reportProgress
-            }
-        );
-{{/useHttpClient}}
-{{^useHttpClient}}
         let requestOptions: RequestOptionsArgs = new RequestOptions({
-            method: {{httpMethod}},
             headers: headers,
-{{#bodyParam}}
-            body: {{paramName}} == null ? '' : JSON.stringify({{paramName}}), // https://github.com/angular/angular/issues/10612
-{{/bodyParam}}
-{{#hasFormParams}}
-            body: convertFormParamsToString ? formParams.toString() : formParams,
-{{/hasFormParams}}
 {{#isResponseFile}}
             responseType: ResponseContentType.Blob,
 {{/isResponseFile}}
-{{#hasQueryParams}}
+{{#useHttpClient}}
+    {{#hasQueryParams}}
+            params: queryParameters,
+    {{/hasQueryParams}}
+            withCredentials: this.configuration.withCredentials,
+            observe: observe,
+            reportProgress: reportProgress
+{{/useHttpClient}}
+{{^useHttpClient}}
+            method: {{httpMethod}},
+    {{#bodyParam}}
+            body: {{paramName}} == null ? '' : JSON.stringify({{paramName}}), // https://github.com/angular/angular/issues/10612
+    {{/bodyParam}}
+    {{#hasFormParams}}
+            body: convertFormParamsToString ? formParams.toString() : formParams,
+    {{/hasFormParams}}
+    {{#hasQueryParams}}
             search: queryParameters,
-{{/hasQueryParams}}
-            withCredentials:this.configuration.withCredentials
+    {{/hasQueryParams}}
+            withCredentials: this.configuration.withCredentials
+{{/useHttpClient}}
         });
+
+{{/hasFormParams}}
+        const options = {
+            headers: headers,
+{{#isResponseFile}}
+            responseType: 'blob',
+{{/isResponseFile}}
+{{#useHttpClient}}
+    {{#hasQueryParams}}
+            params: queryParameters,
+    {{/hasQueryParams}}
+            withCredentials: this.configuration.withCredentials,
+            observe: observe,
+            reportProgress: reportProgress
+{{/useHttpClient}}
+{{^useHttpClient}}
+            method: {{httpMethod}},
+    {{#bodyParam}}
+            body: {{paramName}} == null ? '' : JSON.stringify({{paramName}}), // https://github.com/angular/angular/issues/10612
+    {{/bodyParam}}
+    {{#hasFormParams}}
+            body: convertFormParamsToString ? formParams.toString() : formParams,
+    {{/hasFormParams}}
+    {{#hasQueryParams}}
+            search: queryParameters,
+    {{/hasQueryParams}}
+            withCredentials: this.configuration.withCredentials
+{{/useHttpClient}}
+        };
+{{#useHttpClient}}
+        const returnType: string = '{{returnType}}';
+        if (returnType === 'string') {
+            return this.httpClient.{{httpMethod}}(`${this.basePath}{{{path}}}`,{{#isBodyAllowed}}
+                {{#bodyParam}}{{paramName}}{{/bodyParam}}{{^bodyParam}}{{#hasFormParams}}convertFormParamsToString ? formParams.toString() : formParams{{/hasFormParams}}{{^hasFormParams}}null{{/hasFormParams}}{{/bodyParam}},{{/isBodyAllowed}}
+                {
+                    ...options,
+                    responseType: 'text'
+                }
+            );
+        } else if (returnType === 'Blob') {
+            return this.httpClient.{{httpMethod}}(`${this.basePath}{{{path}}}`,{{#isBodyAllowed}}
+                {{#bodyParam}}{{paramName}}{{/bodyParam}}{{^bodyParam}}{{#hasFormParams}}convertFormParamsToString ? formParams.toString() : formParams{{/hasFormParams}}{{^hasFormParams}}null{{/hasFormParams}}{{/bodyParam}},{{/isBodyAllowed}}
+                {
+                    ...options,
+                    responseType: 'blob'
+                }
+            );
+        } else {
+            return this.httpClient.{{httpMethod}}{{^isResponseFile}}<{{#returnType}}{{{returnType}}}{{#isResponseTypeFile}}|undefined{{/isResponseTypeFile}}{{/returnType}}{{^returnType}}any{{/returnType}}>{{/isResponseFile}}(`${this.basePath}{{{path}}}`,{{#isBodyAllowed}}
+                {{#bodyParam}}{{paramName}}{{/bodyParam}}{{^bodyParam}}{{#hasFormParams}}convertFormParamsToString ? formParams.toString() : formParams{{/hasFormParams}}{{^hasFormParams}}null{{/hasFormParams}}{{/bodyParam}},{{/isBodyAllowed}}
+                {
+                    ...options,
+                    responseType: 'json'
+                }
+            );
+        }
+{{/useHttpClient}}
+{{^useHttpClient}}
         // https://github.com/swagger-api/swagger-codegen/issues/4037
+        let requestOptions: RequestOptionsArgs = new RequestOptions(options);
         if (extraHttpRequestParams) {
             requestOptions = (<any>Object).assign(requestOptions, extraHttpRequestParams);
         }
